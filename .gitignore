@@ -1,8 +1,5 @@
 # Obsidianの個人設定ファイル
-.obsidian/workspace
-.obsidian/workspace.json
-.obsidian/plugins/*/data.json
-
+.obsidian
 # OS固有の不要ファイル
 .DS_Store
 Thumbs.db
