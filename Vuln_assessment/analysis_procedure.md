@@ -1,6 +1,6 @@
-# 脆弱性分析 具体的手順
+# 脆弱性分析 実施要領
 
-収集フェーズ(Phase 0-9)の出力を「確定所見+対策+証跡」へ変換する手順。前提は FOSS のみ・AD除外・系統混在(Windows/Linux/RHEL/Solaris)。入力は `~/assessment/scans`(nmap XML/gnmap, NSE)、`~/assessment/web`(nuclei JSON 等)、OpenVAS エクスポート、手動列挙ノート。
+収集フェーズ(Phase 0-9)の出力を「確定所見+対策+証跡」へ変換する手順。前提は FOSS のみ・AD除外・エアギャップ(インターネット非接続)・系統混在(Windows/Linux/RHEL/Solaris)。入力は `~/assessment/scans`(nmap XML/gnmap, NSE)、`~/assessment/web`(nuclei JSON 等)、OpenVAS エクスポート、手動列挙ノート。
 
 共通変数: `T`=対象ホスト。作業は `~/assessment/analysis`。
 
@@ -67,17 +67,26 @@ rpm -q --changelog openssh-server | grep -m1 "CVE-"
 ## Step 3: エンリッチ(KEV / EPSS / CVSS)
 
 ```bash
+
 # CISA KEV カタログ取得
 curl -s https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json -o kev.json
 
-# 検出CVEが KEV 該当かを判定
+# エアギャップ前提: kev.json / epss.csv はステージングで事前取得し媒体で持込
+#   ステージング側取得元(調査端末では実行しない):
+#     KEV : https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json
+#     EPSS: https://epss.cyentia.com/epss_scores-current.csv.gz (gunzip 済みを持込)
+#   取得日(スナップショット鮮度)をレポートに明記
+
+# 検出CVEが KEV 該当かを判定(持込済み kev.json を参照)
 while read c; do
   hit=$(jq -r --arg c "$c" '.vulnerabilities[]|select(.cveID==$c)|.cveID' kev.json)
   echo "$c KEV=$([ -n "$hit" ] && echo YES || echo no)"
 done < cves.txt | tee kev_match.txt
 
+# EPSS(持込済み epss.csv を参照)
 # EPSS バルクCSV取得(悪用確率)
 curl -s https://epss.cyentia.com/epss_scores-current.csv.gz | gunzip > epss.csv
+
 while read c; do
   printf "%s," "$c"; grep -m1 "^$c," epss.csv | cut -d, -f2 || echo "n/a"
 done < cves.txt | tee epss_match.txt
