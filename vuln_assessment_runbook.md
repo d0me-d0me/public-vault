@@ -1,4 +1,4 @@
-# 脆弱性調査 実施要領(統合版)
+# 脆弱性調査 実施要領
 
 - 調査端末: Kali Linux (root)
 - 対象OS: Windows 7-11 / Server, Linux, RHEL, Solaris
