@@ -19,47 +19,47 @@ LH=$(ip a show tun0 | grep "inet " | awk '{print $2}' | cut -d/ -f1)   # LHOST(V
 
 「対象OS」は各ツールを当てる対象側のOS(実行端末は Kali)。リンクは各フェーズに記載。
 
-| 名前 | 作成者 / 企業 | 用途 | 対象OS |
-|---|---|---|---|
-| nmap | Nmap Project (Gordon Lyon) | ポート/サービス/OS判定・NSE | 全OS |
-| masscan | Robert Graham | 高速ポートスイープ | 全OS |
-| arp-scan | Roy Hills / NTA Monitor | L2(ARP)ホスト発見 | 全OS(L2) |
-| netdiscover | Jaime Penalba | L2(ARP)ホスト発見 | 全OS(L2) |
-| nmap-vulners | Vulners.com | CVE相関 NSE | 全OS |
-| OpenVAS / GVM | Greenbone | 統合脆弱性スキャナ(FOSS) | 全OS |
-| testssl.sh | Dirk Wetter | TLS/SSL 評価 | 全OS |
-| sslscan | rbsec ほか | TLS/SSL 暗号列挙 | 全OS |
-| WhatWeb | urbanadventurer (A. Horton) / B. Coles | Web 技術スタック特定 | 全OS(Web) |
-| feroxbuster | epi052 (Ben Risher) | ディレクトリ探索(再帰) | 全OS(Web) |
-| ffuf | Joona Hoikkala | Web ファジング/探索 | 全OS(Web) |
-| gobuster | OJ Reeves | dir/vhost/DNS 探索 | 全OS(Web) |
-| git-dumper | Maxime Arthaud | 露出 .git からソース復元 | 全OS(Web) |
-| nuclei | ProjectDiscovery | テンプレート型脆弱性検出 | 全OS(Web/サービス) |
-| Nikto | Chris Sullo / CIRT.net | Web サーバ脆弱性スキャン | 全OS(Web) |
-| WPScan | WPScan Team (Automattic) | WordPress 脆弱性スキャン(無料APIは25req/日制限) | WordPress |
-| SecLists | Daniel Miessler ほか | ワードリスト集 | 全OS(辞書) |
-| enum4linux-ng | cddmp (M. Henze) | SMB/NetBIOS 列挙 | Windows/Samba |
-| smbmap | Shawn Evans | SMB 共有再帰列挙 | Windows/Samba |
-| NetExec (nxc) | NetExec team(CrackMapExec 後継) | SMB/MSSQL/WinRM 列挙・横展開 | Windows/Samba |
-| MANSPIDER | Black Lantern Security | 共有内ファイル横断探索 | Windows/Samba |
-| onesixtyone | Trail of Bits(現メンテナ) | SNMP community 総当り | 全OS(SNMP) |
-| Net-SNMP (snmpwalk) | Net-SNMP Project | SNMP MIB 列挙 | 全OS(SNMP) |
-| smtp-user-enum | pentestmonkey (Tim Brown) | SMTP ユーザ列挙 | 全OS(SMTP) |
-| ODAT | Quentin Hardy | Oracle DB 攻撃 | 全OS(Oracle; Solaris/RHEL 重点) |
-| THC-Hydra | van Hauser / THC | ログイン総当り | 全OS(各サービス) |
-| winPEAS (PEASS-ng) | Carlos Polop | Windows 権限昇格列挙 | Windows |
-| PowerUp (PowerSploit) | PowerShellMafia | Windows 権限昇格チェック | Windows |
-| WES-NG | bitsadmin (A. Huijgen) | 欠落パッチ→CVE 特定 | Windows |
-| linPEAS (PEASS-ng) | Carlos Polop | Linux 権限昇格列挙 | Linux/RHEL |
-| linux-exploit-suggester | The-Z-Labs | カーネル exploit 候補 | Linux/RHEL |
-| unix-privesc-check | pentestmonkey (Tim Brown) | Unix 汎用ローカルチェック | Linux/Solaris/Unix |
-| ligolo-ng | Nicolas Chatelain | ピボット/トンネリング | 全OS |
-| chisel | Jared Pillora | TCP/UDP トンネル | 全OS |
-| searchsploit / Exploit-DB | OffSec | エクスプロイト検索 | 全OS |
-| Metasploit Framework | Rapid7 | エクスプロイト/検証・補助モジュール | 全OS |
-| impacket | Fortra(旧 SecureAuth / Core Security) | プロトコル操作・認証後処理 | Windows 中心 |
-| CISA KEV | CISA(米 DHS) | 悪用中脆弱性カタログ(トリアージ) | 全OS(参照) |
-| EPSS | FIRST.org | 悪用確率スコア(トリアージ) | 全OS(参照) |
+| 名前                        | 作成者 / 企業                               | 用途                                 | 対象OS                         |
+| ------------------------- | -------------------------------------- | ---------------------------------- | ---------------------------- |
+| nmap                      | Nmap Project (Gordon Lyon)             | ポート/サービス/OS判定・NSE                  | 全OS                          |
+| masscan                   | Robert Graham                          | 高速ポートスイープ                          | 全OS                          |
+| arp-scan                  | Roy Hills / NTA Monitor                | L2(ARP)ホスト発見                       | 全OS(L2)                      |
+| netdiscover               | Jaime Penalba                          | L2(ARP)ホスト発見                       | 全OS(L2)                      |
+| nmap-vulners              | Vulners.com                            | CVE相関 NSE                          | 全OS                          |
+| OpenVAS / GVM             | Greenbone                              | 統合脆弱性スキャナ(FOSS)                    | 全OS                          |
+| testssl.sh                | Dirk Wetter                            | TLS/SSL 評価                         | 全OS                          |
+| sslscan                   | rbsec ほか                               | TLS/SSL 暗号列挙                       | 全OS                          |
+| WhatWeb                   | urbanadventurer (A. Horton) / B. Coles | Web 技術スタック特定                       | 全OS(Web)                     |
+| feroxbuster               | epi052 (Ben Risher)                    | ディレクトリ探索(再帰)                       | 全OS(Web)                     |
+| ffuf                      | Joona Hoikkala                         | Web ファジング/探索                       | 全OS(Web)                     |
+| gobuster                  | OJ Reeves                              | dir/vhost/DNS 探索                   | 全OS(Web)                     |
+| git-dumper                | Maxime Arthaud                         | 露出 .git からソース復元                    | 全OS(Web)                     |
+| nuclei                    | ProjectDiscovery                       | テンプレート型脆弱性検出                       | 全OS(Web/サービス)                |
+| Nikto                     | Chris Sullo / CIRT.net                 | Web サーバ脆弱性スキャン                     | 全OS(Web)                     |
+| WPScan                    | WPScan Team (Automattic)               | WordPress 脆弱性スキャン(無料APIは25req/日制限) | WordPress                    |
+| SecLists                  | Daniel Miessler ほか                     | ワードリスト集                            | 全OS(辞書)                      |
+| enum4linux-ng             | cddmp (M. Henze)                       | SMB/NetBIOS 列挙                     | Windows/Samba                |
+| smbmap                    | Shawn Evans                            | SMB 共有再帰列挙                         | Windows/Samba                |
+| NetExec (nxc)             | NetExec team(CrackMapExec 後継)          | SMB/MSSQL/WinRM 列挙・横展開             | Windows/Samba                |
+| MANSPIDER                 | Black Lantern Security                 | 共有内ファイル横断探索                        | Windows/Samba                |
+| onesixtyone               | Trail of Bits(現メンテナ)                   | SNMP community 総当り                 | 全OS(SNMP)                    |
+| Net-SNMP (snmpwalk)       | Net-SNMP Project                       | SNMP MIB 列挙                        | 全OS(SNMP)                    |
+| smtp-user-enum            | pentestmonkey (Tim Brown)              | SMTP ユーザ列挙                         | 全OS(SMTP)                    |
+| ODAT                      | Quentin Hardy                          | Oracle DB 攻撃                       | 全OS(Oracle; Solaris/RHEL 重点) |
+| THC-Hydra                 | van Hauser / THC                       | ログイン総当り                            | 全OS(各サービス)                   |
+| winPEAS (PEASS-ng)        | Carlos Polop                           | Windows 権限昇格列挙                     | Windows                      |
+| PowerUp (PowerSploit)     | PowerShellMafia                        | Windows 権限昇格チェック                   | Windows                      |
+| WES-NG                    | bitsadmin (A. Huijgen)                 | 欠落パッチ→CVE 特定                       | Windows                      |
+| linPEAS (PEASS-ng)        | Carlos Polop                           | Linux 権限昇格列挙                       | Linux/RHEL                   |
+| linux-exploit-suggester   | The-Z-Labs                             | カーネル exploit 候補                    | Linux/RHEL                   |
+| unix-privesc-check        | pentestmonkey (Tim Brown)              | Unix 汎用ローカルチェック                    | Linux/Solaris/Unix           |
+| ligolo-ng                 | Nicolas Chatelain                      | ピボット/トンネリング                        | 全OS                          |
+| chisel                    | Jared Pillora                          | TCP/UDP トンネル                       | 全OS                          |
+| searchsploit / Exploit-DB | OffSec                                 | エクスプロイト検索                          | 全OS                          |
+| Metasploit Framework      | Rapid7                                 | エクスプロイト/検証・補助モジュール                 | 全OS                          |
+| impacket                  | Fortra(旧 SecureAuth / Core Security)   | プロトコル操作・認証後処理                      | Windows 中心                   |
+| CISA KEV                  | CISA(米 DHS)                            | 悪用中脆弱性カタログ(トリアージ)                  | 全OS(参照)                      |
+| EPSS                      | FIRST.org                              | 悪用確率スコア(トリアージ)                     | 全OS(参照)                      |
 
 上記のほか `dig`, `ldapsearch`(OpenLDAP), `ftp`, `mysql`/`psql`/`redis-cli`, `rpcinfo`/`showmount`, `curl` 等の標準クライアントを各列挙で使用。
 
@@ -530,7 +530,7 @@ CVSS に加え CISA KEV(実際に悪用中)と EPSS(悪用確率)を相関させ
 
 ## Phase 11: 記録
 
-- 所見の一覧・トリアージ・進捗: 表計算ベースの所見トラッカ(CVSS入力→深刻度自動判定、系統/OSフィルタ)
+- 所見の一覧・トリアージ・進捗: 表計算ベースの調査結果(CVSS入力→深刻度自動判定、系統/OSフィルタ)
 - 再現手順の一次ソース: Markdown ノート(コマンド+出力を保全)
 - 系統(Windows/Linux/RHEL/Solaris)はトラッカの「系統/OS」列でフィルタ・集計
 
