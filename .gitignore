@@ -1,6 +1,4 @@
-# Obsidianの個人設定ファイル
 .obsidian
-# OS固有の不要ファイル
 .DS_Store
 Thumbs.db
 desktop.ini
