@@ -1,16 +1,24 @@
 # public-vault
 
-A public [Obsidian](https://obsidian.md) vault of long-form security notes —
-lab writeups, disclosed-CVE reproductions, and field notes from both sides of
-security. The terminal-style cheat sheets live on the site; this vault is the
-longer working notes behind them.
+A public [Obsidian](https://obsidian.md) vault for the hands-on layer of the
+work — lab and CTF writeups, disclosed-CVE reproductions, and the atomic notes
+taken while doing them. This is the primary-source material; the finished
+essays and the condensed cheat sheets live on the site.
 
-公開 Obsidian vault。ラボの writeup・公開 CVE の再現・攻撃/防御両面のフィールド
-ノートを長文で記録する。要点を凝縮したチートシートはサイト側にあり、本 vault は
-その背後の作業ノートを置く場所。
+公開 Obsidian vault。実作業レイヤ (ラボ/CTF の writeup・公開 CVE の再現・その過程で
+とった atomic note) を置く一次資料。完成した考察エッセイと凝縮チートシートはサイト
+側にあり、本 vault はその手前の生の記録を担う。
 
-- Site / cheat sheets → https://d0me-d0me.github.io
-- Profile → https://github.com/d0me-d0me
+## Where things live
+
+| Layer | Where | What |
+|---|---|---|
+| Essays | [blog](https://d0me-d0me.github.io) `_posts` | Finished offense/defense concept pieces |
+| Cheat sheets | [refs](https://d0me-d0me.github.io) | Condensed operational references |
+| **Hands-on notes** | **this vault** | **Writeups, CVE reproductions, atomic notes** |
+
+Finished conceptual writing belongs on the blog, not here — this vault stays
+upstream of it.
 
 ## Structure
 
@@ -18,8 +26,7 @@ longer working notes behind them.
 |---|---|
 | [`writeups/`](writeups/index.md) | CTF and lab machine writeups |
 | [`cves/`](cves/index.md) | Reproductions of disclosed CVEs |
-| [`notes/`](notes/index.md) | Atomic field notes |
-| [`concepts/`](concepts/index.md) | Longer concept notes bridging offense and defense |
+| [`notes/`](notes/index.md) | Atomic field notes that feed the cheat sheets |
 | [`templates/`](templates/) | Note templates |
 
 Start from the vault home: [`index.md`](index.md).
